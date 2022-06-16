@@ -53,7 +53,7 @@ namespace ChatRoomClient
         }   
         private static void Send(TcpClient client, string msg)
         {
-            var requestBuffer = System.Text.Encoding.Unicode.GetBytes(msg);
+            var requestBuffer = System.Text.Encoding.ASCII.GetBytes(msg);
 
             client.GetStream().Write(requestBuffer, 0, requestBuffer.Length);
         }
