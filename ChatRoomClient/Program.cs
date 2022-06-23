@@ -8,54 +8,50 @@ namespace ChatRoomClient
     {
         static void Main(string[] args)
         {
-            const string hostIP = "127.0.0.1";
-            const int port = 4099;
-
             Console.WriteLine("====================================");
-            var client = new TcpClient();
-            try
-            {
-                Console.WriteLine("Connecting to chat server {0}:{1}", hostIP, port);
-                client.Connect(hostIP, port);
+            var client = new ChatRoomCore.ChatClient();
 
-                if (!client.Connected)
+            Console.WriteLine("<Please enter your name...>");
+            var name = Console.ReadLine();
+
+            var succeed = client.Connect("127.0.0.1", 4099);
+
+            if (!succeed)
+            {
+                return;
+            }
+
+            client.SetName(name);
+            Console.WriteLine("<You can press any key to start entering text...>");
+
+            while (true)
+            {
+                while (Console.KeyAvailable == false)
                 {
-                    Console.WriteLine("Can't Connect to chat server");
-                    return;
+                    client.Refresh();
+
+                    var messages = client.GetMessages();
+                    foreach (var message in messages)
+                    {
+                        Console.WriteLine("{0}: {1}", message.Key, message.Value);
+                    }
+
+                    System.Threading.Thread.Sleep(1);
                 }
 
-                Console.WriteLine("Connected to chat server");
-                var counter = 0;
-                while (counter < 5)
-                {
-                    counter++;
-                    //var msg = "go-go-go-" + counter;
-                    var msg = Console.ReadLine()+counter;
-                    Send(client, msg);
-                    Console.WriteLine("message sent: " + msg);
-                    System.Threading.Thread.Sleep(1000);
-                }
-            }
-            catch (ArgumentNullException e)
-            {
-                Console.WriteLine("ArgumentNullException: {0}", e);
-            }
-            catch (SocketException e)
-            {
-                Console.WriteLine("SocketException: {0}", e);
-            }
-            finally
-            {
-                client.Close();
-                Console.WriteLine("Disconnected");
-                Console.Read();
-            }
-        }   
-        private static void Send(TcpClient client, string msg)
-        {
-            var requestBuffer = System.Text.Encoding.ASCII.GetBytes(msg);
+                var msg = Console.ReadLine();
 
-            client.GetStream().Write(requestBuffer, 0, requestBuffer.Length);
+                if (msg == "exit")
+                {
+                    Console.WriteLine("<Bye...>");
+                    client.Disconnect();
+                    break;
+                }
+
+                client.SendMessage(msg);
+                Console.WriteLine("<Message sent, press any key to start entering text again...>");
+            }
         }
+
     }
 }
